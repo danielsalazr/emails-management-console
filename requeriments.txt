@@ -1,0 +1,15 @@
+django
+djangorestframework
+django-admin-interface
+django-environ==0.8
+django-colorfield
+django-excel
+fpdf2
+mysql-connector-python
+mysqlclient
+openpyxl
+Pillow
+PyPDF2
+qrcode
+requests
+wheels
