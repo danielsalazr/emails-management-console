@@ -48,7 +48,7 @@ def search_messages(service, query):
     # result = service.users().threads().list(userId="me",q=query).execute()
     messages = [ ]
 
-    console.log(result)
+    # console.log(result)
     if 'messages' in result:
         messages.extend(result['messages'])
     while 'nextPageToken' in result:
@@ -98,34 +98,36 @@ def parse_parts(service, parts, folder_name, message):
                 # if the email part is text plain
                 if data:
                     text = urlsafe_b64decode(data).decode()
-                    print(text)
-            elif mimeType == "text/html":
-                # if the email part is an HTML content
-                # save the HTML file and optionally open it in the browser
-                if not filename:
-                    filename = "index.html"
-                filepath = os.path.join(folder_name, filename)
-                print("Saving HTML to", filepath)
-                with open(filepath, "wb") as f:
-                    f.write(urlsafe_b64decode(data))
-            else:
-                # attachment other than a plain text or HTML
-                for part_header in part_headers:
-                    part_header_name = part_header.get("name")
-                    part_header_value = part_header.get("value")
-                    if part_header_name == "Content-Disposition":
-                        if "attachment" in part_header_value:
-                            # we get the attachment ID 
-                            # and make another request to get the attachment itself
-                            print("Saving the file:", filename, "size:", get_size_format(file_size))
-                            attachment_id = body.get("attachmentId")
-                            attachment = service.users().messages() \
-                                        .attachments().get(id=attachment_id, userId='me', messageId=message['id']).execute()
-                            data = attachment.get("data")
-                            filepath = os.path.join(folder_name, filename)
-                            if data:
-                                with open(filepath, "wb") as f:
-                                    f.write(urlsafe_b64decode(data))
+                    console.log(text)
+                    return text
+                    
+            # elif mimeType == "text/html":
+            #     # if the email part is an HTML content
+            #     # save the HTML file and optionally open it in the browser
+            #     if not filename:
+            #         filename = "index.html"
+            #     filepath = os.path.join(folder_name, filename)
+            #     print("Saving HTML to", filepath)
+            #     with open(filepath, "wb") as f:
+            #         f.write(urlsafe_b64decode(data))
+            # else:
+            #     # attachment other than a plain text or HTML
+            #     for part_header in part_headers:
+            #         part_header_name = part_header.get("name")
+            #         part_header_value = part_header.get("value")
+            #         if part_header_name == "Content-Disposition":
+            #             if "attachment" in part_header_value:
+            #                 # we get the attachment ID 
+            #                 # and make another request to get the attachment itself
+            #                 print("Saving the file:", filename, "size:", get_size_format(file_size))
+            #                 attachment_id = body.get("attachmentId")
+            #                 attachment = service.users().messages() \
+            #                             .attachments().get(id=attachment_id, userId='me', messageId=message['id']).execute()
+            #                 data = attachment.get("data")
+            #                 filepath = os.path.join(folder_name, filename)
+            #                 if data:
+            #                     with open(filepath, "wb") as f:
+            #                         f.write(urlsafe_b64decode(data))
 
 
 def read_message(service, message):
@@ -144,6 +146,9 @@ def read_message(service, message):
     parts = payload.get("parts")
     folder_name = "email"
     has_subject = False
+
+    messages = {}
+
     if headers:
         # this section prints email basic info & creates a folder for the email
         for header in headers:
@@ -152,44 +157,42 @@ def read_message(service, message):
             if name.lower() == 'from':
                 # we print the From address
                 print("From:", value)
+                messages['From'] = value
             if name.lower() == "to":
                 # we print the To address
                 print("To:", value)
+                messages['To'] = value
             if name.lower() == "subject":
                 # make our boolean True, the email has "subject"
                 has_subject = True
                 # make a directory with the name of the subject
-                folder_name = clean(value)
-                # we will also handle emails with the same subject name
-                folder_counter = 0
-                while os.path.isdir(folder_name):
-                    folder_counter += 1
-                    # we have the same folder name, add a number next to it
-                    if folder_name[-1].isdigit() and folder_name[-2] == "_":
-                        folder_name = f"{folder_name[:-2]}_{folder_counter}"
-                    elif folder_name[-2:].isdigit() and folder_name[-3] == "_":
-                        folder_name = f"{folder_name[:-3]}_{folder_counter}"
-                    else:
-                        folder_name = f"{folder_name}_{folder_counter}"
-                os.mkdir(folder_name)
+                # folder_name = clean(value)
+                # # we will also handle emails with the same subject name
+                # folder_counter = 0
+                # while os.path.isdir(folder_name):
+                #     folder_counter += 1
+                #     # we have the same folder name, add a number next to it
+                #     if folder_name[-1].isdigit() and folder_name[-2] == "_":
+                #         folder_name = f"{folder_name[:-2]}_{folder_counter}"
+                #     elif folder_name[-2:].isdigit() and folder_name[-3] == "_":
+                #         folder_name = f"{folder_name[:-3]}_{folder_counter}"
+                #     else:
+                #         folder_name = f"{folder_name}_{folder_counter}"
+                # os.mkdir(folder_name)
                 print("Subject:", value)
+                messages['Subject'] = value
             if name.lower() == "date":
                 # we print the date when the message was sent
                 print("Date:", value)
-    if not has_subject:
+    # if not has_subject:
         # if the email does not have a subject, then make a folder with "email" name
         # since folders are created based on subjects
-        if not os.path.isdir(folder_name):
-            os.mkdir(folder_name)
-    parse_parts(service, parts, folder_name, message)
+        # if not os.path.isdir(folder_name):
+        #     os.mkdir(folder_name)
+
+    messages['MailContent'] = parse_parts(service, parts, folder_name, message)
+
+    
     print("="*50)
 
-# get the Gmail API service
-service = gmail_authenticate()
-
-# results = search_messages(service, "Python Code")
-results = search_messages(service, "Python Code")
-# print(f"Found {len(results)} results.")
-# for each email matched, read it (output plain/text to console & save HTML and attachments)
-for msg in results:
-    read_message(service, msg)
+    return messages

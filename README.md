@@ -60,6 +60,13 @@ Run project
 
 ## API Reference
 
+#### Get latest mails
+
+```http
+  GET /emails/getMails/
+```
+Returns a list with latest emails in json format.
+
 #### Get all users
 
 ```http
@@ -73,7 +80,7 @@ Run project
 #### Get an specific mail
 
 ```http
-  GET /mails/getMail/${id}
+  GET /mails/getMails/${id}
 ```
 
 | Parameter | Type     | Description                       |

@@ -5,6 +5,9 @@ django-environ==0.8
 django-colorfield
 django-excel
 fpdf2
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
 mysql-connector-python
 mysqlclient
 openpyxl
@@ -12,4 +15,4 @@ Pillow
 PyPDF2
 qrcode
 requests
-wheels
+#wheels
